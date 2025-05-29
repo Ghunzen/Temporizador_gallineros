@@ -1,82 +1,85 @@
-def calcular_tiempo_recoleccion(jaulas_restantes, velocidad_hz=50, segundos_base_por_jaula=17):
+def calcular_tiempo_recoleccion(jaulas_restantes: int, frecuencia_hz: int = 50, segundos_base_por_jaula: int = 17) -> str:
     """
-    Calcula el tiempo restante para la recolección de huevos.
+    Calcula el tiempo estimado restante para la recolección de huevos basándose en el conteo de jaulas y la frecuencia de la máquina.
 
     Args:
-        jaulas_restantes (int): Número de jaulas que faltan por vaciar.
-        velocidad_hz (int): Frecuencia de operación en Hz (por defecto 50 Hz).
-        segundos_base_por_jaula (int): Segundos que tarda cada jaula a 50 Hz (por defecto 17).
+        jaulas_restantes (int): El número de jaulas pendientes de vaciar.
+        frecuencia_hz (int): La frecuencia de operación de la máquina en Hertz (valor predeterminado: 50 Hz).
+        segundos_base_por_jaula (int): El tiempo base por jaula a una frecuencia de 50 Hz (valor predeterminado: 17 segundos).
 
     Returns:
-        str: El tiempo restante en formato hh:mm:ss.
+        str: El tiempo estimado en formato HH:MM:SS. Retorna un mensaje de error si la entrada es inválida.
     """
-    if jaulas_restantes < 0:
-        return "Cantidad de jaulas inválida. Debe ser un número positivo."
+    if not isinstance(jaulas_restantes, int) or jaulas_restantes < 0:
+        return "Cantidad de jaulas inválida. Debe ser un número entero no negativo."
+    if not isinstance(frecuencia_hz, int) or frecuencia_hz <= 0:
+        return "Frecuencia inválida. Debe ser un número entero positivo."
+    if not isinstance(segundos_base_por_jaula, (int, float)) or segundos_base_por_jaula <= 0:
+        return "Segundos base por jaula inválidos. Debe ser un número positivo."
 
-    # Si la velocidad es diferente a 50 Hz, ajustamos los segundos por jaula
-    if velocidad_hz != 50:
-        # Calculamos la proporción de velocidad.
-        # Si es 25 Hz, es el doble de tiempo (50/25 = 2).
-        # Si es 100 Hz, es la mitad de tiempo (50/100 = 0.5).
-        factor_velocidad = 50 / velocidad_hz
-        segundos_por_jaula_ajustado = segundos_base_por_jaula * factor_velocidad
-    else:
-        segundos_por_jaula_ajustado = segundos_base_por_jaula
+    # Ajusta los segundos por jaula basándose en la frecuencia de operación real respecto a la frecuencia base (50 Hz).
+    # Si la frecuencia es, por ejemplo, 25 Hz (la mitad de 50), el factor será 50/25 = 2, duplicando el tiempo por jaula.
+    # Si la frecuencia es 100 Hz (el doble de 50), el factor será 50/100 = 0.5, reduciendo el tiempo a la mitad.
+    factor_ajuste_frecuencia = 50 / frecuencia_hz
+    segundos_por_jaula_ajustado = segundos_base_por_jaula * factor_ajuste_frecuencia
 
     tiempo_total_segundos = jaulas_restantes * segundos_por_jaula_ajustado
 
-    # Convertimos los segundos a horas, minutos y segundos
     horas = int(tiempo_total_segundos // 3600)
     minutos = int((tiempo_total_segundos % 3600) // 60)
     segundos = int(tiempo_total_segundos % 60)
 
-    # Formateamos la salida a hh:mm:ss
     return f"{horas:02d}:{minutos:02d}:{segundos:02d}"
 
-def temporizador_gallineros():
+def ejecutar_temporizador_gallineros():
     """
-    Función principal para interactuar con el usuario y calcular el tiempo.
+    Ejecuta la aplicación de temporizador para la recolección de huevos,
+    solicitando la entrada del usuario y mostrando los tiempos calculados.
     """
-    print("--- Calculador de Tiempo para Recolección de Huevos ---")
-    print("¡Acordate que cada jaula tarda 17 segundos a 50 Hz por defecto!")
+    print("--- Temporizador de Recolección de Huevos en Gallineros ---")
 
     while True:
-        entrada = input("¿Cuántas jaulas faltan? (o 'largo'/'corto' para gallineros estándar, 'salir' para terminar): ").lower().strip()
+        entrada_usuario = input("Ingrese jaulas restantes (ej: '150'), 'largo'/'corto' para galpones estándar, o 'salir': ").strip().lower()
 
-        if entrada == 'salir':
-            print("¡Nos vemos! ¡A seguirle dando a la envasadora!")
+        if entrada_usuario == 'salir':
+            print("Saliendo de la aplicación. ¡Hasta pronto!")
             break
-        elif entrada == 'largo':
-            jaulas = 181 # Gallineros Nº 1, 2, 3 o 4
-            descripcion = "Gallinero largo (181 jaulas)"
-        elif entrada == 'corto':
-            jaulas = 131 # Gallineros Nº 5, 6, 7, 8, 9 o 10
-            descripcion = "Gallinero corto (131 jaulas)"
+
+        jaulas = 0
+        descripcion = ""
+
+        if entrada_usuario == 'largo':
+            jaulas = 181  # Estándar para galpones largos (Nº 1, 2, 3, 4)
+            descripcion = "Galpón Largo (181 jaulas)"
+        elif entrada_usuario == 'corto':
+            jaulas = 131  # Estándar para galpones cortos (Nº 5, 6, 7, 8, 9, 10)
+            descripcion = "Galpón Corto (131 jaulas)"
         else:
             try:
-                jaulas = int(entrada)
-                descripcion = f"{jaulas} jaulas"
+                jaulas = int(entrada_usuario)
+                descripcion = f"{jaulas} Jaulas"
                 if jaulas < 0:
-                    print(calcular_tiempo_recoleccion(jaulas)) # Maneja el error de número negativo
+                    print(calcular_tiempo_recoleccion(jaulas))  # Maneja el error de entrada negativa
                     continue
             except ValueError:
-                print("Entrada inválida. Por favor, ingresá un número, 'largo', 'corto' o 'salir'.")
+                print("Entrada inválida. Por favor, ingrese un número, 'largo', 'corto' o 'salir'.")
                 continue
 
-        # Preguntar por la velocidad si es diferente a 50 Hz
-        velocidad_input = input("¿A qué frecuencia está la máquina? (ej: 25, 50, 60, 100 Hz) [Por defecto: 50]: ").strip()
-        velocidad_hz = 50 # Valor por defecto
-        if velocidad_input:
+        entrada_frecuencia = input(f"Ingrese la frecuencia de la máquina en Hz (ej: '25', '50', '60', '100') [Predeterminado: 50]: ").strip()
+        frecuencia_hz = 50  # Valor predeterminado
+
+        if entrada_frecuencia:
             try:
-                velocidad_hz = int(velocidad_input)
-                if velocidad_hz <= 0:
-                    print("La frecuencia debe ser un número positivo. Usando 50 Hz por defecto.")
-                    velocidad_hz = 50
+                frecuencia_hz = int(entrada_frecuencia)
+                if frecuencia_hz <= 0:
+                    print("La frecuencia debe ser un número entero positivo. Se usará 50 Hz por defecto.")
+                    frecuencia_hz = 50
             except ValueError:
-                print("Frecuencia inválida. Usando 50 Hz por defecto.")
+                print("Entrada de frecuencia inválida. Se usará 50 Hz por defecto.")
 
-        tiempo_restante = calcular_tiempo_recoleccion(jaulas, velocidad_hz)
-        print(f"Para {descripcion} a {velocidad_hz} Hz: {tiempo_restante}\n")
+        tiempo_estimado = calcular_tiempo_recoleccion(jaulas, frecuencia_hz)
+        print(f"Tiempo estimado para {descripcion} a {frecuencia_hz} Hz: {tiempo_estimado}\n")
 
-# Para ejecutar el temporizador, solo tenés que llamar a la función principal:
-temporizador_gallineros()
+# Punto de entrada principal para la ejecución de la aplicación
+if __name__ == "__main__":
+    ejecutar_temporizador_gallineros()
